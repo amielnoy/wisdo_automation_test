@@ -5,6 +5,8 @@ import { buildUser } from '../../src/data/userFactory';
 import { env } from '../../src/config/env';
 import { SignupFlow } from '../../src/flows/SignupFlow';
 import { EmailLinkSentPage } from '../../src/pages/EmailLinkSentPage';
+import { SignupPage } from '../../src/pages/SignupPage';
+import { invalidEmailCases, passwordRuleCases } from '../../src/data/validationCases';
 
 const SIGNUP_URL = new RegExp(env.signupPath);
 
@@ -93,37 +95,67 @@ test.describe('Signup — registration', () => {
     });
   });
 
-  test('5. rejects an invalid email format', async ({ page, signupFlow }) => {
-    await allure.story('Form validation');
-    await allure.severity(allure.Severity.NORMAL);
+  // Data-driven: cases (fields to set + expected results) come from test-data/invalid-emails.json.
+  for (const c of invalidEmailCases) {
+    test(`5. rejects malformed email: ${c.name} (${c.fields.email})`, async ({ page, signupFlow }) => {
+      await allure.story('Form validation');
+      await allure.severity(allure.Severity.NORMAL);
+      await allure.parameter('email', c.fields.email!);
+      await allure.parameter('blocked by', c.expected.blockedBy);
+      const p = signupFlow.signupPage;
 
-    await signupFlow.submitForm(buildUser({ email: 'amielnoy@gmail' }));
+      await signupFlow.fillForm(buildUser(c.fields));
+      const registrationSent = await signupFlow.submitAndWatchRegistration();
 
-    await step('Verify the malformed email is rejected and kept in the field', async () => {
-      // Same copy as an empty field: "Please enter an email." (UX finding, see SignupPage.emailError).
-      await expect(signupFlow.signupPage.emailError).toBeVisible();
-      await expect(signupFlow.signupPage.emailInput).toHaveValue('amielnoy@gmail');
-      await expect(page).toHaveURL(SIGNUP_URL);
+      await step('Verify no account was created: the registration request was never sent', async () => {
+        expect(registrationSent, 'POST /v2/registration must not be sent').toBe(false);
+        await expect(page).toHaveURL(SIGNUP_URL);
+      });
+      if (c.expected.blockedBy === 'app') {
+        const { error } = c.expected;
+        await step(`Verify the app rejects it with "${error}"`, async () => {
+          expect(await p.isEmailValidForBrowser(), 'the browser accepts it, so the app is the layer that blocks').toBe(true);
+          await expect(p.validationMessage(error)).toBeVisible();
+        });
+      } else {
+        await step('Verify the browser’s own email validation is what blocks it', async () => {
+          expect(await p.isEmailValidForBrowser()).toBe(false);
+        });
+      }
+      await step('Verify the typed value is kept in the field', async () => {
+        await expect(p.emailInput).toHaveValue(c.fields.email!);
+      });
     });
-  });
+  }
 
-  test('6. rejects a password shorter than 8 characters', async ({ page, signupFlow }) => {
-    await allure.story('Form validation');
-    await allure.severity(allure.Severity.NORMAL);
-    const p = signupFlow.signupPage;
+  // Data-driven: cases (fields to set + expected results) come from test-data/password-rules.json.
+  for (const c of passwordRuleCases) {
+    test(`6. password rules: ${c.name}`, async ({ page, signupFlow }) => {
+      await allure.story('Form validation');
+      await allure.severity(allure.Severity.NORMAL);
+      await allure.parameter('nickname', c.fields.nickname ?? env.nickname);
+      await allure.parameter('expected strength', c.expected.strength);
+      const p = signupFlow.signupPage;
 
-    await signupFlow.fillForm(buildUser({ password: '123' }));
-    await step('Verify live validation: length error and "Strength: Weak"', async () => {
-      await expect(p.passwordLengthError).toBeVisible();
-      await expect(p.passwordStrength('Weak')).toBeVisible();
+      await signupFlow.fillForm(buildUser(c.fields));
+
+      await step(`Verify live feedback: "Strength: ${c.expected.strength}" and ${c.expected.errors.length || 'no'} error(s)`, async () => {
+        await expect(p.passwordStrength(c.expected.strength)).toBeVisible();
+        for (const error of SignupPage.PASSWORD_ERRORS) {
+          if (c.expected.errors.includes(error)) await expect(p.validationMessage(error)).toBeVisible();
+          else await expect(p.validationMessage(error)).toBeHidden();
+        }
+      });
+
+      if (c.expected.submitBlocked) {
+        const registrationSent = await signupFlow.submitAndWatchRegistration();
+        await step('Verify the submit is blocked: the registration request was never sent', async () => {
+          expect(registrationSent, 'POST /v2/registration must not be sent').toBe(false);
+          await expect(page).toHaveURL(SIGNUP_URL);
+        });
+      }
     });
-
-    await p.submit();
-    await step('Verify submission is blocked', async () => {
-      await expect(p.passwordLengthError).toBeVisible();
-      await expect(page).toHaveURL(SIGNUP_URL);
-    });
-  });
+  }
 
   test('7. re-registering an existing email does not reveal the account and sends a link instead of an OTP', async ({ browser, page, signupFlow, newUser }) => {
     await allure.story('Duplicate account');

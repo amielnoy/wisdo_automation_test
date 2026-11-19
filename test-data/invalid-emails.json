@@ -1,0 +1,30 @@
+{
+  "description": "Malformed emails are rejected. 'fields' are merged onto a valid generated user before submitting. 'blockedBy' says which layer stops the submit: 'browser' = native type=email validation (the form has no novalidate, so the app never sees it); 'app' = passes the browser check but the app shows its own error.",
+  "cases": [
+    {
+      "name": "missing top-level domain",
+      "fields": { "email": "amielnoy@gmail" },
+      "expected": { "blockedBy": "app", "error": "Please enter an email." }
+    },
+    {
+      "name": "missing @",
+      "fields": { "email": "amielnoy.gmail.com" },
+      "expected": { "blockedBy": "browser" }
+    },
+    {
+      "name": "missing domain",
+      "fields": { "email": "amielnoy@" },
+      "expected": { "blockedBy": "browser" }
+    },
+    {
+      "name": "missing local part",
+      "fields": { "email": "@gmail.com" },
+      "expected": { "blockedBy": "browser" }
+    },
+    {
+      "name": "double @",
+      "fields": { "email": "amielnoy@@gmail.com" },
+      "expected": { "blockedBy": "browser" }
+    }
+  ]
+}

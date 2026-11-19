@@ -69,12 +69,20 @@ Tests 9–10 read the real Gmail inbox over IMAP. Enable 2FA on the Google accou
 | 2 | Password show/hide toggle | smoke |
 | 3 | Legal links: correct href, `target=_blank`, `rel=noopener` | smoke |
 | 4 | Empty submit is blocked with "Please enter an email." | negative |
-| 5 | Malformed email rejected | negative |
-| 6 | Password under 8 characters: live error and "Strength: Weak", submit blocked | negative |
+| 5 | **Data-driven** (5 cases from `test-data/invalid-emails.json`): malformed emails rejected, by the browser's own check or by the app | negative |
+| 6 | **Data-driven** (5 cases from `test-data/password-rules.json`): live errors and strength label; blocked submits send no registration request | negative |
 | 7 | Duplicate email: no enumeration, routed to link verification | negative |
 | 8 | Valid signup → OTP screen (6 inputs, resend, address shown) | e2e |
 | 9 | Verification email (sender, subject, 6-digit code) delivered to the alias | e2e |
 | 10 | Entering the emailed code verifies the account | e2e |
+
+## Data-driven tests
+Tests 5 and 6 load their cases from JSON in `test-data/`. Each case has a `name`, the `fields` to set (merged onto a valid generated user) and the `expected` results. Adding a row adds a test. The loader (`src/data/validationCases.ts`) checks every case when it loads, so a malformed entry fails with a clear error instead of becoming a test that checks nothing. A blocked submit is proven by `SignupFlow.submitAndWatchRegistration()`: the account-creating `POST /v2/registration` must never be sent. An error that was already on screen before the click would prove nothing.
+
+Behavior observed on canary and encoded in the data:
+- The email form has no `novalidate`, so most malformed addresses are stopped by the **browser** before the app sees them. Only `amielnoy@gmail` reaches the app's "Please enter an email.".
+- There are two password rules: under 8 characters → "Password must be at least 8 characters."; 8 or more but guessable → "Password not secure enough…".
+- Strength is scored **against the nickname and email**: `amielnoy123` is "Strong" on an empty form but "Weak" once the nickname `amielnoy` is filled in, so the form fills the nickname before the password.
 
 ## Email verification mechanics
 Talkspace sends a **6-digit code** (subject "Verify your email address", from team@talkspace.com, expires in 10 minutes).

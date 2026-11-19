@@ -33,9 +33,29 @@ export class SignupFlow {
   @step('Fill the signup form')
   async fillForm(user: Partial<SignupUser>) {
     if (user.email !== undefined) await this.signupPage.fillEmail(user.email);
-    if (user.password !== undefined) await this.signupPage.fillPassword(user.password);
+    // Nickname before password: the strength meter scores the password against the nickname/email,
+    // so they must already be filled when the password is typed.
     if (user.nickname !== undefined) await this.signupPage.fillNickname(user.nickname);
+    if (user.password !== undefined) await this.signupPage.fillPassword(user.password);
     if (user.stateCode !== undefined) await this.signupPage.selectState(user.stateCode);
+  }
+
+  /** The POST that creates the account (observed on canary: clientapi…/v2/registration). */
+  static readonly REGISTRATION_API = /\/v2\/registration$/;
+
+  /**
+   * Clicks "Create account" and reports whether the registration request was sent within `windowMs`.
+   * This is how a test proves a submit was blocked: an error that was already on screen before the
+   * click says nothing about what the click did. Proving a negative needs a bounded wait; the request
+   * fires immediately on a valid submit, so 5s is a wide margin.
+   */
+  @step('Click "Create account" and watch for the registration request')
+  async submitAndWatchRegistration(windowMs = 5_000): Promise<boolean> {
+    const sent = this.page
+      .waitForRequest((r) => r.method() === 'POST' && SignupFlow.REGISTRATION_API.test(new URL(r.url()).pathname), { timeout: windowMs })
+      .then(() => true, () => false);
+    await this.signupPage.submit();
+    return sent;
   }
 
   @step('Fill and submit the signup form')

@@ -57,3 +57,10 @@ particular the places where the AI's output was wrong and got corrected.
     *Correction: the first version showed the whole multi-line commit message as the title. Now `run-name` only titles manual runs and otherwise falls back to GitHub's default.*
 21. > add the allure link to gh actions on the summary
 22. > put all prompts here on claude cli in PROMPTS.md
+23. > upgrade the github actions versions
+
+    *Release notes checked first: upload-pages-artifact v4+ skips dotfiles (the report has none) and deploy-pages needs `actions: read`. The Node 20 deprecation warnings are gone.*
+24. > build me the word file for the part2 of the assignment on pdf file in the root of the repo
+25. > make 2 of the short tests data drriven tests load the fields to set and expected results from json
+
+    *Expected results were taken from the live app before being written to the JSON. That surfaced a second password rule and nickname-aware strength scoring. Correction: the "submit is blocked" assertion was vacuous, because the error was already visible before the click. It now proves that no `POST /v2/registration` was sent, and the check was verified to detect a real submit.*

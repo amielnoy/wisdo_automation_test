@@ -88,12 +88,27 @@ export class SignupPage extends BasePage {
     return this.page.getByText('Please enter an email.');
   }
 
-  /** Password rules are validated live while typing, before submit. */
+  /** Every password error copy observed on canary. Password rules are validated live while typing. */
+  static readonly PASSWORD_ERRORS = [
+    'Password must be at least 8 characters.',
+    "Password not secure enough. Try adding symbols or words, and don't use repeat characters.",
+  ] as const;
+
   get passwordLengthError(): Locator {
-    return this.page.getByText('Password must be at least 8 characters.');
+    return this.validationMessage(SignupPage.PASSWORD_ERRORS[0]);
   }
 
-  passwordStrength(level: 'Weak' | 'Medium' | 'Strong'): Locator {
+  validationMessage(text: string): Locator {
+    return this.page.getByText(text);
+  }
+
+  /** Labels observed: "Weak", "Strong", "Very strong" (scored against the nickname/email). */
+  passwordStrength(level: string): Locator {
     return this.page.getByText(`Strength: ${level}`);
+  }
+
+  /** The browser's own type=email check. The form has no novalidate, so this runs before the app's validation. */
+  async isEmailValidForBrowser(): Promise<boolean> {
+    return this.emailInput.evaluate((el) => (el as HTMLInputElement).validity.valid);
   }
 }
