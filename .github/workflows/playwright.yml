@@ -1,11 +1,29 @@
 name: Playwright Tests
 
+# Title shown in the Actions run list. Manual runs otherwise all read "Playwright Tests".
+# Display-only: run-name is never executed by a shell, so commit/PR text here can't inject commands.
+run-name: >-
+  ${{
+    github.event_name == 'workflow_dispatch' && (
+      inputs.reason != '' && format('Manual run: {0}', inputs.reason)
+      || format('Manual run on {0} by {1}', github.ref_name, github.actor)
+    )
+    || github.event_name == 'pull_request' && format('PR #{0}: {1}', github.event.pull_request.number, github.event.pull_request.title)
+    || github.event.head_commit.message
+  }}
+
 on:
   push:
     branches: [main]
   pull_request:
     branches: [main]
   workflow_dispatch:
+    inputs:
+      reason:
+        description: Why are you running this? (shown as the run title)
+        required: false
+        default: ''
+        type: string
 
 # Every run creates real accounts on canary, so don't let superseded runs pile up.
 concurrency:
