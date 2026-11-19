@@ -1,5 +1,7 @@
 # Talkspace Signup — Playwright + TypeScript
 
+[![Playwright Tests](https://github.com/amielnoy/wisdo_automation_test/actions/workflows/playwright.yml/badge.svg)](https://github.com/amielnoy/wisdo_automation_test/actions/workflows/playwright.yml)
+
 Automated tests for the signup flow at
 `https://app.canary.talkspace.com/signup/autoswitchpt`, covering registration and email verification.
 
@@ -41,6 +43,11 @@ npm run test:smoke          # read-only page checks (no account created)
 npm run test:e2e            # creates real accounts on canary
 npm run report
 ```
+
+## CI (GitHub Actions)
+`.github/workflows/playwright.yml` runs on every push and pull request to `main`, and can also be started manually from the Actions tab. Steps: `npm ci` → typecheck → install Chromium → run all tests (2 workers, 2 retries in CI). The HTML report is always uploaded as an artifact. Traces and videos are uploaded when a test fails.
+
+To run tests 9–10 in CI, add the Gmail App Password as a repository secret named `GMAIL_APP_PASSWORD` (Settings → Secrets and variables → Actions, or `gh secret set GMAIL_APP_PASSWORD`). Without it, those two tests are skipped.
 
 ### Email verification setup
 Tests 9–10 read the real Gmail inbox over IMAP. Enable 2FA on the Google account, create an
