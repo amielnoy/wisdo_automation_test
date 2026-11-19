@@ -42,4 +42,9 @@ export class VerifyEmailPage extends BasePage {
   async resendCode() {
     await this.resendButton.click();
   }
+
+  @step('Click "Update email"')
+  async updateEmail() {
+    await this.updateEmailButton.click();
+  }
 }

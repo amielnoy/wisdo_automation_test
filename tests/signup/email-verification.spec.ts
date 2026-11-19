@@ -1,5 +1,6 @@
 import * as allure from 'allure-js-commons';
 import { test, expect } from '../../src/fixtures/test';
+import { step } from '../../src/utils/step';
 import { extractVerificationCode } from '../../src/utils/mailbox/Mailbox';
 import { VerifyEmailPage } from '../../src/pages/VerifyEmailPage';
 
@@ -22,7 +23,7 @@ test.describe('Signup — email verification', { tag: '@e2e' }, () => {
     await signupFlow.registerNewUser(newUser);
     const email = await emailVerificationFlow.waitForVerificationEmail(newUser.email, since);
 
-    await test.step('Verify sender, subject, expiry notice and 6-digit code', async () => {
+    await step('Verify sender, subject, expiry notice and 6-digit code', async () => {
       expect(email.from).toContain('team@talkspace.com');
       expect(email.subject).toBe('Verify your email address');
       expect(email.text).toMatch(/expire after 10 minutes/i);
@@ -38,7 +39,7 @@ test.describe('Signup — email verification', { tag: '@e2e' }, () => {
     const email = await emailVerificationFlow.waitForVerificationEmail(newUser.email, since);
     await emailVerificationFlow.verifyWithEmailedCode(email);
 
-    await test.step('Verify the user leaves the OTP screen', async () => {
+    await step('Verify the user leaves the OTP screen', async () => {
       await expect(page).not.toHaveURL(VerifyEmailPage.URL, { timeout: 30_000 });
       await expect(signupFlow.verifyEmailPage.title).toBeHidden();
     });

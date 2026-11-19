@@ -1,5 +1,6 @@
 import { Locator, Page } from '@playwright/test';
 import { BasePage } from './BasePage';
+import { step } from '../utils/step';
 
 /**
  * /email-verification/sent#email=… shown when signing up with an email that already has an account.
@@ -21,5 +22,10 @@ export class EmailLinkSentPage extends BasePage {
 
   sentToMessage(email: string): Locator {
     return this.page.getByText(`We sent an email with a verification link to ${email}`);
+  }
+
+  @step('Click "Resend email"')
+  async resendEmail() {
+    await this.resendEmailButton.click();
   }
 }

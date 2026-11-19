@@ -1,5 +1,6 @@
 import * as allure from 'allure-js-commons';
 import { test, expect } from '../../src/fixtures/test';
+import { step } from '../../src/utils/step';
 import { buildUser } from '../../src/data/userFactory';
 import { env } from '../../src/config/env';
 import { SignupFlow } from '../../src/flows/SignupFlow';
@@ -20,18 +21,18 @@ test.describe('Signup — registration', () => {
     await allure.severity(allure.Severity.CRITICAL);
     const p = signupFlow.signupPage;
 
-    await test.step('Verify the form fields are present with correct input types', async () => {
+    await step('Verify the form fields are present with correct input types', async () => {
       await expect(p.heading).toBeVisible();
       await expect(p.emailInput).toBeVisible();
       await expect(p.emailInput).toHaveAttribute('type', 'email');
       await expect(p.passwordInput).toHaveAttribute('type', 'password');
       await expect(p.nicknameInput).toBeVisible();
     });
-    await test.step('Verify country defaults to United States and a state can be chosen', async () => {
+    await step('Verify country defaults to United States and a state can be chosen', async () => {
       await expect(p.countrySelectedValue).toHaveText('United States');
       await expect(p.stateDropdown).toBeVisible();
     });
-    await test.step('Verify "Create account" is enabled', async () => {
+    await step('Verify "Create account" is enabled', async () => {
       await expect(p.submitButton).toBeEnabled();
     });
   });
@@ -43,14 +44,14 @@ test.describe('Signup — registration', () => {
     await p.fillPassword(env.password);
 
     await p.showPassword();
-    await test.step('Verify the password is shown in plain text', async () => {
+    await step('Verify the password is shown in plain text', async () => {
       await expect(p.passwordInput).toHaveAttribute('type', 'text');
       await expect(p.passwordInput).toHaveValue(env.password);
       await expect(p.hidePasswordButton).toBeVisible();
     });
 
     await p.hidePassword();
-    await test.step('Verify the password is masked again', async () => {
+    await step('Verify the password is masked again', async () => {
       await expect(p.passwordInput).toHaveAttribute('type', 'password');
       await expect(p.showPasswordButton).toBeVisible();
     });
@@ -68,13 +69,13 @@ test.describe('Signup — registration', () => {
     ] as const;
 
     for (const [name, link, href] of expected) {
-      await test.step(`Verify "${name}" link → ${href} (new tab, noopener)`, async () => {
+      await step(`Verify "${name}" link → ${href} (new tab, noopener)`, async () => {
         await expect(link).toHaveAttribute('href', href);
         await expect(link).toHaveAttribute('target', '_blank');
         await expect(link).toHaveAttribute('rel', /noopener/);
       });
     }
-    await test.step('Verify "Log in" link → /login', async () => {
+    await step('Verify "Log in" link → /login', async () => {
       await expect(p.loginLink).toHaveAttribute('href', '/login');
     });
   });
@@ -85,7 +86,7 @@ test.describe('Signup — registration', () => {
 
     await signupFlow.signupPage.submit();
 
-    await test.step('Verify the email error is shown and the user stays on signup', async () => {
+    await step('Verify the email error is shown and the user stays on signup', async () => {
       // Wait for the error first so the URL check can't pass before a navigation would have happened.
       await expect(signupFlow.signupPage.emailError).toBeVisible();
       await expect(page).toHaveURL(SIGNUP_URL);
@@ -98,7 +99,7 @@ test.describe('Signup — registration', () => {
 
     await signupFlow.submitForm(buildUser({ email: 'amielnoy@gmail' }));
 
-    await test.step('Verify the malformed email is rejected and kept in the field', async () => {
+    await step('Verify the malformed email is rejected and kept in the field', async () => {
       // Same copy as an empty field: "Please enter an email." (UX finding, see SignupPage.emailError).
       await expect(signupFlow.signupPage.emailError).toBeVisible();
       await expect(signupFlow.signupPage.emailInput).toHaveValue('amielnoy@gmail');
@@ -112,13 +113,13 @@ test.describe('Signup — registration', () => {
     const p = signupFlow.signupPage;
 
     await signupFlow.fillForm(buildUser({ password: '123' }));
-    await test.step('Verify live validation: length error and "Strength: Weak"', async () => {
+    await step('Verify live validation: length error and "Strength: Weak"', async () => {
       await expect(p.passwordLengthError).toBeVisible();
       await expect(p.passwordStrength('Weak')).toBeVisible();
     });
 
     await p.submit();
-    await test.step('Verify submission is blocked', async () => {
+    await step('Verify submission is blocked', async () => {
       await expect(p.passwordLengthError).toBeVisible();
       await expect(page).toHaveURL(SIGNUP_URL);
     });
@@ -128,7 +129,7 @@ test.describe('Signup — registration', () => {
     await allure.story('Duplicate account');
     await allure.severity(allure.Severity.CRITICAL);
 
-    await test.step('Precondition: an account already exists for the email', async () => {
+    await step('Precondition: an account already exists for the email', async () => {
       const firstContext = await browser.newContext();
       const firstRun = new SignupFlow(await firstContext.newPage());
       await firstRun.registerNewUser(newUser);
@@ -137,7 +138,7 @@ test.describe('Signup — registration', () => {
 
     await signupFlow.submitForm({ ...newUser, nickname: `${newUser.nickname}2` });
 
-    await test.step('Verify no "already registered" error and routing to link-based verification', async () => {
+    await step('Verify no "already registered" error and routing to link-based verification', async () => {
       const linkSent = signupFlow.emailLinkSentPage;
       await expect(page).toHaveURL(EmailLinkSentPage.URL, { timeout: 30_000 });
       await expect(linkSent.sentToMessage(newUser.email)).toBeVisible();
@@ -153,7 +154,7 @@ test.describe('Signup — registration', () => {
     await signupFlow.submitForm(newUser);
     await signupFlow.waitForVerificationScreen();
 
-    await test.step('Verify the OTP screen targets the registered email', async () => {
+    await step('Verify the OTP screen targets the registered email', async () => {
       const verify = signupFlow.verifyEmailPage;
       expect(new URL(page.url()).searchParams.get('email')).toBe(newUser.email);
       await expect(verify.title).toBeVisible();
