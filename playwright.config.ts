@@ -9,7 +9,26 @@ export default defineConfig({
   workers: process.env.CI ? 2 : undefined,
   timeout: 60_000,
   expect: { timeout: 10_000 },
-  reporter: [['list'], ['html', { open: 'never' }]],
+  reporter: [
+    ['list'],
+    ['html', { open: 'never' }],
+    [
+      'allure-playwright',
+      {
+        resultsDir: 'allure-results',
+        // Hide Playwright's low-level API steps (they echo fill values, e.g. the password); the @step titles
+        // already describe each action. Keep assertion steps.
+        detail: false,
+        reportMatchers: true,
+        environmentInfo: {
+          'Base URL': env.baseUrl,
+          'Signup path': env.signupPath,
+          'Node': process.version,
+          'OS': `${process.platform} ${process.arch}`,
+        },
+      },
+    ],
+  ],
   use: {
     baseURL: env.baseUrl,
     // The app tags its controls with data-qa — make getByTestId() use it.

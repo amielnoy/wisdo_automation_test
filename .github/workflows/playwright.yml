@@ -20,6 +20,7 @@ jobs:
       CI: true
       # Optional repo secret. When missing, the email-verification tests (9-10) skip instead of failing.
       GMAIL_APP_PASSWORD: ${{ secrets.GMAIL_APP_PASSWORD }}
+      PAGES_URL: https://${{ github.repository_owner }}.github.io/${{ github.event.repository.name }}
     steps:
       - uses: actions/checkout@v4
 
@@ -40,7 +41,30 @@ jobs:
       - name: Run tests
         run: npx playwright test
 
-      - name: Upload HTML report
+      # ---- Allure report (built even when tests fail — that's when it's needed most) ----
+
+      - name: Restore Allure history from the published site
+        if: ${{ !cancelled() }}
+        run: |
+          mkdir -p allure-history
+          curl -fsSL "$PAGES_URL/history/history.jsonl" -o allure-history/history.jsonl \
+            || echo "No published history yet. Starting fresh."
+
+      - name: Generate Allure report
+        if: ${{ !cancelled() }}
+        run: |
+          npx allure generate allure-results
+          # Publish the updated history next to the report so the next run can restore it.
+          mkdir -p allure-report/history
+          cp allure-history/history.jsonl allure-report/history/history.jsonl
+
+      - name: Upload Allure report for GitHub Pages
+        if: ${{ !cancelled() && github.event_name != 'pull_request' }}
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: allure-report
+
+      - name: Upload Playwright HTML report
         if: ${{ !cancelled() }}
         uses: actions/upload-artifact@v4
         with:
@@ -55,3 +79,19 @@ jobs:
           name: test-results
           path: test-results/
           retention-days: 14
+
+  publish-report:
+    needs: test
+    # Publish for main pushes and manual runs, also when tests failed (red reports matter too). Never for PRs.
+    if: ${{ !cancelled() && needs.test.result != 'skipped' && github.event_name != 'pull_request' }}
+    runs-on: ubuntu-latest
+    permissions:
+      pages: write
+      id-token: write
+    environment:
+      name: github-pages
+      url: ${{ steps.deploy.outputs.page_url }}
+    steps:
+      - name: Deploy Allure report to GitHub Pages
+        id: deploy
+        uses: actions/deploy-pages@v4

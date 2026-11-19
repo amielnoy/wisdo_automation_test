@@ -1,5 +1,6 @@
 import { Locator, Page } from '@playwright/test';
 import { BasePage } from './BasePage';
+import { step } from '../utils/step';
 
 /**
  * /email-verification/otp?email=…&token=… shown right after "Create account".
@@ -30,12 +31,14 @@ export class VerifyEmailPage extends BasePage {
   }
 
   /** One digit per box; the last digit triggers submission. */
+  @step('Enter verification code {0}')
   async enterCode(code: string) {
     for (const [i, digit] of [...code].entries()) {
       await this.codeInputs.nth(i).fill(digit);
     }
   }
 
+  @step('Click "Resend Code"')
   async resendCode() {
     await this.resendButton.click();
   }

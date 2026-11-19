@@ -9,13 +9,19 @@
     "test:headed": "playwright test --headed",
     "typecheck": "tsc",
     "report": "playwright show-report",
-    "test:demo": "TEST_DELAY_MS=5000 playwright test --headed --workers=1"
+    "test:demo": "TEST_DELAY_MS=5000 playwright test --headed --workers=1",
+    "allure:generate": "allure generate allure-results",
+    "allure:open": "allure open allure-report",
+    "pretest": "rm -rf allure-results"
   },
   "type": "commonjs",
   "devDependencies": {
     "@playwright/test": "^1.65.1",
     "@types/mailparser": "^3.9.0",
     "@types/node": "^26.6.6",
+    "allure": "^3.33.0",
+    "allure-js-commons": "^3.15.0",
+    "allure-playwright": "^3.15.0",
     "dotenv": "^18.0.10",
     "imapflow": "^2.12.1",
     "mailparser": "^3.14.5",

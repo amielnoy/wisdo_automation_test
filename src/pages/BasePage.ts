@@ -1,4 +1,4 @@
-import { Page } from '@playwright/test';
+import { Page, test } from '@playwright/test';
 
 /** Shared plumbing for page objects. Page objects expose locators + atomic actions only — no assertions, no business flows. */
 export abstract class BasePage {
@@ -7,6 +7,7 @@ export abstract class BasePage {
   abstract readonly path: string;
 
   async open(): Promise<void> {
-    await this.page.goto(this.path);
+    // Inline step (not @step) because the title needs the instance's path.
+    await test.step(`Navigate to ${this.path}`, () => this.page.goto(this.path).then(() => undefined), { box: true });
   }
 }
