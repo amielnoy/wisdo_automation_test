@@ -11,6 +11,7 @@ type Fixtures = {
   emailVerificationFlow: EmailVerificationFlow;
   mailbox: Mailbox;
   newUser: SignupUser;
+  delayBetweenTests: void;
 };
 
 /**
@@ -34,6 +35,18 @@ export const test = base.extend<Fixtures>({
   newUser: async ({}, use) => {
     await use(buildUser());
   },
+
+  /**
+   * Demo aid: TEST_DELAY_MS pauses after each test. Depends on `page` so its teardown runs
+   * before the page closes, leaving the final state on screen during the pause in headed runs.
+   */
+  delayBetweenTests: [
+    async ({ page }, use) => {
+      await use();
+      if (env.testDelayMs > 0) await page.waitForTimeout(env.testDelayMs);
+    },
+    { auto: true },
+  ],
 });
 
 export { expect };

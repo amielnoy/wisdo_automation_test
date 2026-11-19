@@ -13,4 +13,7 @@ export const env = {
   // Optional: Gmail App Password for reading verification emails over IMAP.
   // When unset, the email-verification inbox tests are skipped (not failed).
   gmailAppPassword: process.env.GMAIL_APP_PASSWORD,
+
+  // Pause after each test (ms), for watching headed demo runs. 0 = off.
+  testDelayMs: Number(process.env.TEST_DELAY_MS ?? 0),
 };
