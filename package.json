@@ -1,0 +1,23 @@
+{
+  "name": "talkspace-signup-automation",
+  "version": "1.0.0",
+  "description": "Playwright + TypeScript automation for the Talkspace signup flow (3-layer: tests → flows → page objects)",
+  "scripts": {
+    "test": "playwright test",
+    "test:smoke": "playwright test --grep @smoke",
+    "test:e2e": "playwright test --grep @e2e",
+    "test:headed": "playwright test --headed",
+    "typecheck": "tsc",
+    "report": "playwright show-report"
+  },
+  "type": "commonjs",
+  "devDependencies": {
+    "@playwright/test": "^1.65.1",
+    "@types/mailparser": "^3.9.0",
+    "@types/node": "^26.6.6",
+    "dotenv": "^18.0.10",
+    "imapflow": "^2.12.1",
+    "mailparser": "^3.14.5",
+    "typescript": "^7.0.2"
+  }
+}
