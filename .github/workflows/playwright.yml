@@ -1,15 +1,16 @@
 name: Playwright Tests
 
-# Title shown in the Actions run list. Manual runs otherwise all read "Playwright Tests".
-# Display-only: run-name is never executed by a shell, so commit/PR text here can't inject commands.
+# Title shown in the Actions run list; manual runs otherwise all read "Playwright Tests".
+# Only manual runs get a custom title. For every other event this evaluates to '', and GitHub then
+# uses its default title (the commit's first line for pushes, the PR title for PRs). Expressions
+# can't split strings, so head_commit.message here would show the entire multi-line message.
 run-name: >-
   ${{
     github.event_name == 'workflow_dispatch' && (
       inputs.reason != '' && format('Manual run: {0}', inputs.reason)
       || format('Manual run on {0} by {1}', github.ref_name, github.actor)
     )
-    || github.event_name == 'pull_request' && format('PR #{0}: {1}', github.event.pull_request.number, github.event.pull_request.title)
-    || github.event.head_commit.message
+    || ''
   }}
 
 on:
@@ -77,6 +78,13 @@ jobs:
           mkdir -p allure-report/history
           cp allure-history/history.jsonl allure-report/history/history.jsonl
 
+      - name: Write test summary with Allure report link
+        if: ${{ !cancelled() }}
+        env:
+          # PRs aren't published, so no link for them (the script says where to look instead).
+          REPORT_URL: ${{ github.event_name != 'pull_request' && format('{0}/', env.PAGES_URL) || '' }}
+        run: node scripts/write-summary.mjs allure-results
+
       - name: Upload Allure report for GitHub Pages
         if: ${{ !cancelled() && github.event_name != 'pull_request' }}
         uses: actions/upload-pages-artifact@v3
@@ -114,3 +122,10 @@ jobs:
       - name: Deploy Allure report to GitHub Pages
         id: deploy
         uses: actions/deploy-pages@v4
+
+      - name: Add published report link to the summary
+        env:
+          PAGE_URL: ${{ steps.deploy.outputs.page_url }}
+        run: |
+          echo "### 🚀 Allure report published" >> "$GITHUB_STEP_SUMMARY"
+          echo "[$PAGE_URL]($PAGE_URL) (GitHub Pages may take a minute to show the new version)" >> "$GITHUB_STEP_SUMMARY"
