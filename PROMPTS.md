@@ -64,3 +64,6 @@ particular the places where the AI's output was wrong and got corrected.
 25. > make 2 of the short tests data drriven tests load the fields to set and expected results from json
 
     *Expected results were taken from the live app before being written to the JSON. That surfaced a second password rule and nickname-aware strength scoring. Correction: the "submit is blocked" assertion was vacuous, because the error was already visible before the click. It now proves that no `POST /v2/registration` was sent, and the check was verified to detect a real submit.*
+26. > update all docs
+
+    *README rewritten to match the current state (18 test cases, data-driven tests, Allure, CI summary and run titles, new findings). Fixed `<reason>`-style placeholders that GitHub would have removed as HTML tags. Part 2 document regenerated.*
