@@ -53,6 +53,7 @@ jobs:
       - name: Generate Allure report
         if: ${{ !cancelled() }}
         run: |
+          node scripts/strip-sensitive-attachments.mjs allure-results
           npx allure generate allure-results
           # Publish the updated history next to the report so the next run can restore it.
           mkdir -p allure-report/history
