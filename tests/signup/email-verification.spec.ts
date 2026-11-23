@@ -9,6 +9,10 @@ import { VerifyEmailPage } from '../../src/pages/VerifyEmailPage';
  * so the suite stays green on machines without inbox access.
  */
 test.describe('Signup — email verification', { tag: '@e2e' }, () => {
+  // Registration (~20s) + inbox wait (up to 60s) + OTP entry must fit, so the mailbox's own
+  // "No email arrived" error fires before Playwright's generic test timeout.
+  test.describe.configure({ timeout: 120_000 });
+
   test.beforeEach(async () => {
     await allure.epic('Signup');
     await allure.feature('Email verification');
